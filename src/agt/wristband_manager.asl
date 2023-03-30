@@ -42,6 +42,7 @@ owner_state(_).
     readProperty("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#ReadOwnerState",  OwnerStateLst);
     .nth(0,OwnerStateLst,OwnerState); // performs an action that unifies OwnerState with the element of the list OwnerStateLst at index 0
     -+owner_state(OwnerState); // updates the beleif owner_state 
+    .send(personal_assistant, tell, owner_state(OwnerState));
     .wait(5000);
     !read_owner_state. // creates the goal !read_owner_state
 
