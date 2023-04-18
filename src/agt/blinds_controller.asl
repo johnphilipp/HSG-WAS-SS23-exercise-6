@@ -27,28 +27,61 @@ blinds("lowered").
 
 @raise_blinds_plan
 +should_wake_up_owner(State) : should_wake_up_owner(1) & blinds("lowered") <- 
-    .print("The blinds are lowered and it is time to wake up the owner");
-    .send(personal_assistant, tell, propose_raise_blinds(1)).
+    .print("The blinds are lowered and it is time to wake up the owner").
 
 @set_blinds_state_plan
 +!set_blinds_state(State) : true <-
-    invokeAction("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#SetState",  ["https://www.w3.org/2019/wot/json-schema#StringSchema"], [State])[ArtId];
+    .print("Invoking action");
+    invokeAction("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#SetState", [State])[ArtId];
     -+blinds(State);
-    .print("BC Set blinds ", State);
-    .send(personal_assistant, tell, blinds(State)).
+    .print("Set blinds ", State).
 
 @exec_lower_blinds_plan
 +!lower_blinds : true <-
-    set_blinds_state("lowered").
+    .print("Lowering blinds");
+    !set_blinds_state("lowered").
 
 @exec_raise_blinds_plan
 +!raise_blinds : true <-
-    .print("BC Raising the blinds");
-    set_blinds_state("raised").
+    .print("Raising blinds");
+    !set_blinds_state("raised").
 
 @blinds_plan
 +blinds(State) : true <-
-    .print("The blinds are ", State).
+    .print("The blinds are ", State);
+    .send(personal_assistant, tell, blinds(State)).
+
+@cfp_propose
++cfp("wake-up")[source(Controller)] :  blinds("lowered") <-
+    .print("CFP received; Sending proposal ", "blinds");
+    -cfp("wake-up")[source(Controller)];
+    .send(Controller, tell, propose("blinds")[cfp("wake-up")]).
+
+@cfp_decline
++cfp("wake-up")[source(Controller)] : blinds("raised") <-
+    .print("CFP received; Blinds are already raised");
+    -cfp("wake-up")[source(Controller)];
+    .send(Controller, tell, decline("wake-up")).
+
+@received_accept
++accept_proposal(Proposal)[source(Controller)] : true <-
+    !raise_blinds;
+    +completed(Proposal)[source(Controller)].
+
+@received_decline
++decline_proposal(Proposal)[source(Controller)] : true <-
+    -decline_proposal(Proposal)[source(Controller)].
+
+-!raise_blinds : true <-
+    .send(personal_assistant, tell, failed("blinds")).
+
+@failed
++failed(Proposal)[source(Controller)] : true <-
+    .send(Controller, tell, failed(Proposal)).
+
+@completed
++completed(Proposal)[source(Controller)]: true <-
+    .send(Controller, tell, completed(Proposal)).
 
 /* Import behavior of agents that work in CArtAgO environments */
 { include("$jacamoJar/templates/common-cartago.asl") }

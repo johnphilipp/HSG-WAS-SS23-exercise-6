@@ -27,22 +27,57 @@ lights("off").
 
 @set_lights_state_plan
 +!set_lights_state(State) : true <-
-    invokeAction("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#SetState",  ["https://www.w3.org/2019/wot/json-schema#StringSchema"], [State])[ArtId];
+    invokeAction("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#SetState", [State])[ArtId];
     .print("Set lights ", State);
-    -+lights(State);
-    .send(personal_assistant, tell, lights(State)).
+    -+lights(State).
 
 @lights_on_plan
 +!lights_on : true <-
-    set_lights_state("on").
+    .print("Turning lights on");
+    !set_lights_state("on").
 
 @lights_off_plan
 +!lights_off : true <-
-    set_lights_state("off").
+    .print("Turning lights off");
+    !set_lights_state("off").
 
 @lights_plan
 +lights(State) : true <-
-    .print("The lights are ", State).
+    .print("The lights are ", State);
+    .send(personal_assistant, tell, lights(State)).
+
+@cfp_propose
++cfp("wake-up")[source(Controller)] :  lights("off") <-
+    .print("CFP received; Sending proposal ", "lights");
+    -cfp("wake-up")[source(Controller)];
+    .send(Controller, tell, propose("lights")[cfp("wake-up")]).
+
+@cfp_decline
++cfp("wake-up")[source(Controller)] : lights("on") <-
+    .print("CFP received; Lights are already on");
+    -cfp("wake-up")[source(Controller)];
+    .send(Controller, tell, decline("wake-up")).
+
+@received_accept
++accept_proposal(Proposal)[source(Controller)] : true <-
+    -accept_proposal(Proposal)[source(Controller)];
+    !lights_on;
+    +completed(Proposal)[source(Controller)].
+
+@received_decline
++decline_proposal(Proposal)[source(Controller)] : true <-
+    -reject_proposal(Proposal)[source(Controller)].
+
+-!lights_on : true <-
+    .send(personal_assistant, tell, failed("blinds")).
+
+@failed
++failed(Proposal)[source(Controller)] : true <-
+    .send(Controller, tell, failed(Proposal)).
+
+@completed
++completed(Proposal)[source(Controller)]: true <-
+    .send(Controller, tell, completed(Proposal)).
 
 /* Import behavior of agents that work in CArtAgO environments */
 { include("$jacamoJar/templates/common-cartago.asl") }

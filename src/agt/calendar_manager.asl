@@ -31,13 +31,13 @@ upcoming_event(_).
     readProperty("https://was-course.interactions.ics.unisg.ch/wake-up-ontology#ReadUpcomingEvent", UpcomingEventLst);
     .nth(0,UpcomingEventLst,UpcomingEvent);
     -+upcoming_event(UpcomingEvent);
-    .send(personal_assistant, tell, upcoming_event(UpcomingEvent));
     .wait(5000);
     !read_upcoming_event.
 
 @upcoming_event_plan
 +upcoming_event(State) : true <-
-    .print("The upcoming event is ", State).
+    .print("The upcoming event is ", State);
+    .send(personal_assistant, tell, upcoming_event(State)).
 
 /* Import behavior of agents that work in CArtAgO environments */
 { include("$jacamoJar/templates/common-cartago.asl") }
